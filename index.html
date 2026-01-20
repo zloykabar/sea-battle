@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Морской бой</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-ship"></i> Морской бой</h1>
+            <div class="game-info">
+                <div class="info-item">
+                    <span class="label">Ход:</span>
+                    <span id="turn">Игрок</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Статус:</span>
+                    <span id="status">Расставьте корабли</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Попаданий:</span>
+                    <span id="hits">0</span>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="boards-container">
+                <div class="player-section">
+                    <h2><i class="fas fa-user"></i> Ваше поле</h2>
+                    <div class="board" id="player-board"></div>
+                    <div class="ship-selection" id="ship-selection">
+                        <h3>Корабли для расстановки:</h3>
+                        <div class="ships-to-place">
+                            <div class="ship-item" data-size="4">4-палубный (1 шт)</div>
+                            <div class="ship-item" data-size="3">3-палубный (2 шт)</div>
+                            <div class="ship-item" data-size="2">2-палубный (3 шт)</div>
+                            <div class="ship-item" data-size="1">1-палубный (4 шт)</div>
+                        </div>
+                        <div class="controls">
+                            <button id="rotate-btn">
+                                <i class="fas fa-sync-alt"></i> Повернуть
+                            </button>
+                            <button id="random-btn">
+                                <i class="fas fa-random"></i> Случайно
+                            </button>
+                            <button id="start-btn" disabled>
+                                <i class="fas fa-play"></i> Начать игру
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="computer-section">
+                    <h2><i class="fas fa-robot"></i> Противник</h2>
+                    <div class="board" id="computer-board"></div>
+                    <div class="computer-info">
+                        <h3>Статистика:</h3>
+                        <p>Ваши выстрелы: <span id="player-shots">0</span></p>
+                        <p>Выстрелы противника: <span id="computer-shots">0</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-log">
+                <h3><i class="fas fa-clipboard-list"></i> Журнал игры</h3>
+                <div id="log"></div>
+            </div>
+        </main>
+
+        <footer>
+            <button id="new-game-btn">
+                <i class="fas fa-redo"></i> Новая игра
+            </button>
+            <button id="instructions-btn">
+                <i class="fas fa-question-circle"></i> Правила
+            </button>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="cell ship"></div>
+                    <span>Корабль</span>
+                </div>
+                <div class="legend-item">
+                    <div class="cell hit"></div>
+                    <span>Попадание</span>
+                </div>
+                <div class="legend-item">
+                    <div class="cell miss"></div>
+                    <span>Промах</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <div id="instructions-modal" class="modal">
+        <div class="modal-content">
