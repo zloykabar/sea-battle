@@ -30,7 +30,7 @@ header {
 
 h1 {
     color: #1a2980;
-    font-size: 3em;
+    font-size: 2.5em;
     margin-bottom: 15px;
     display: flex;
     align-items: center;
@@ -223,7 +223,7 @@ button {
 }
 
 button:hover {
-transform: translateY(-2px);
+    transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     background: linear-gradient(135deg, #26d0ce, #1a2980);
 }
@@ -403,11 +403,11 @@ footer {
     .boards-container {
         flex-direction: column;
     }
-    
+
     .player-section, .computer-section {
         width: 100%;
     }
-    
+
     .board {
         max-width: 100%;
     }
@@ -417,35 +417,40 @@ footer {
     .container {
         padding: 15px;
     }
-    
+
     h1 {
         font-size: 2em;
     }
-    
+
     .game-info {
         flex-direction: column;
         gap: 15px;
     }
-    
+
     .info-item {
         min-width: auto;
         width: 100%;
     }
-    
+
     .controls {
         flex-direction: column;
     }
-    
+
     button {
         width: 100%;
     }
-    
+
     footer {
         flex-direction: column;
         text-align: center;
     }
-    
+
     .legend {
         justify-content: center;
     }
+}
+
+.cell.preview {
+    background-color: #666 !important;
+    border: 2px solid #333;
 }
