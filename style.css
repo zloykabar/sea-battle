@@ -449,3 +449,82 @@ footer {
         justify-content: center;
     }
 }
+.cell.preview {
+    background-color: #666 !important;
+    border: 2px solid #333;
+}
+
+#player-board .cell.ship {
+    background-color: #495057;
+    border: 2px solid #212529;
+}
+
+#player-board .cell.hit {
+    background-color: #ff6b6b;
+}
+
+#player-board .cell.miss {
+    background-color: #adb5bd;
+}
+
+#computer-board .cell {
+    cursor: pointer;
+}
+
+#computer-board .cell:hover:not(.hit):not(.miss) {
+    background-color: #339af0;
+}
+
+.ship-item {
+    padding: 10px 15px;
+    margin: 5px 0;
+    background: linear-gradient(135deg, #1a2980, #26d0ce);
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.ship-item.selected {
+    background: linear-gradient(135deg, #ff6b6b, #e03131);
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+}
+
+.ship-item:hover:not(.selected) {
+    background: linear-gradient(135deg, #26d0ce, #1a2980);
+    transform: translateX(5px);
+}
+
+/* Убедитесь, что доска видна */
+.board {
+    border: 3px solid #0d1b4e !important;
+    background-color: #1a2980 !important;
+    padding: 5px !important;
+}
+
+/* Улучшаем видимость ячеек */
+.cell {
+    background-color: #4dabf7 !important;
+    border-radius: 3px !important;
+}
+
+/* Делаем журнал более читаемым */
+#log {
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+    max-height: 200px !important;
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 768px) {
+    .board {
+        max-width: 95vw !important;
+        margin: 10px auto !important;
+    }
+    
+    .cell {
+        min-width: 25px !important;
+        min-height: 25px !important;
+    }
+}
