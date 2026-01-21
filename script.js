@@ -1,486 +1,456 @@
-class SeaBattle {
-    constructor() {
-        this.boardSize = 10;
-        this.ships = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
-        this.playerBoard = this.createEmptyBoard();
-        this.computerBoard = this.createEmptyBoard();
-        this.playerShips = [];
-        this.computerShips = [];
-        this.currentShip = null;
-        this.isHorizontal = true;
-        this.gameStarted = false;
-        this.playerTurn = true;
-        this.shots = { player: 0, computer: 0 };
-        this.hits = { player: 0, computer: 0 };
-        
-        this.init();
-    }
-
-    init() {
-        this.createBoards();
-        this.setupEventListeners();
-        this.updateShipSelection();
-        this.updateGameInfo();
-        this.generateComputerShips();
-        this.logMessage('Игра началась! Расставьте ваши корабли.', 'info');
-    }
-
-    createEmptyBoard() {
-        return Array(this.boardSize).fill().map(() => Array(this.boardSize).fill(0));
-    }
-
-    createBoards() {
-        const playerBoard = document.getElementById('player-board');
-        const computerBoard = document.getElementById('computer-board');
-        
-        playerBoard.innerHTML = '';
-        computerBoard.innerHTML = '';
-
-        for (let y = 0; y < this.boardSize; y++) {
-            for (let x = 0; x < this.boardSize; x++) {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.dataset.x = x;
-                cell.dataset.y = y;
-                
-                // Player board events
-                const playerCell = cell.cloneNode(true);
-                playerCell.addEventListener('click', () => this.handlePlayerBoardClick(x, y));
-                playerCell.addEventListener('mouseover', () => this.handlePlayerBoardHover(x, y));
-                playerBoard.appendChild(playerCell);
-
-                // Computer board events
-                const computerCell = cell.cloneNode(true);
-                computerCell.addEventListener('click', () => this.handleComputerBoardClick(x, y));
-                computerBoard.appendChild(computerCell);
-            }
-        }
-        
-        this.updateBoardDisplay();
-    }
-
-    updateBoardDisplay() {
-        const playerCells = document.querySelectorAll('#player-board .cell');
-        const computerCells = document.querySelectorAll('#computer-board .cell');
-
-        // Update player board
-        for (let y = 0; y < this.boardSize; y++) {
-            for (let x = 0; x < this.boardSize; x++) {
-                const cell = playerCells[y * this.boardSize + x];
-                cell.className = 'cell';
-                
-                if (this.playerBoard[y][x] === 1) {
-                    cell.classList.add('ship');
-                } else if (this.playerBoard[y][x] === 2) {
-                    cell.classList.add('hit');
-                } else if (this.playerBoard[y][x] === 3) {
-                    cell.classList.add('miss');
-                }
-            }
-        }
-
-        // Update computer board (hide ships)
-        for (let y = 0; y < this.boardSize; y++) {
-            for (let x = 0; x < this.boardSize; x++) {
-                const cell = computerCells[y * this.boardSize + x];
-                cell.className = 'cell';
-                
-                if (this.computerBoard[y][x] === 2) {
-                    cell.classList.add('hit');
-                } else if (this.computerBoard[y][x] === 3) {
-                    cell.classList.add('miss');
-                }
-            }
-        }
-    }
-
-    handlePlayerBoardClick(x, y) {
-        if (this.gameStarted) return;
-        
-        if (this.currentShip && this.canPlaceShip(x, y, this.currentShip, this.isHorizontal)) {
-            this.placeShip(x, y, this.currentShip, this.isHorizontal, true);
-            this.updateShipSelection();
-            this.updateBoardDisplay();
-            
-            if (this.playerShips.length === this.ships.length) {
-                document.getElementById('start-btn').disabled = false;
-                this.logMessage('Все корабли расставлены! Нажмите "Начать игру"', 'info');
-            }
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1a2980, #26d0ce);
+    color: #333;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    padding: 30px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 3px solid #1a2980;
+}
+
+h1 {
+    color: #1a2980;
+    font-size: 2.5em;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+}
+
+h1 i {
+    color: #26d0ce;
+}
+
+.game-info {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    background: linear-gradient(135deg, #f0f8ff, #e6f7ff);
+    padding: 15px;
+    border-radius: 15px;
+    border: 2px solid #1a2980;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 20px;
+    background: white;
+    border-radius: 10px;
+    min-width: 150px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.label {
+    font-weight: 600;
+    color: #1a2980;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+#turn, #status, #hits {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #26d0ce;
+}
+
+.boards-container {
+    display: flex;
+    gap: 40px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.player-section, .computer-section {
+    flex: 1;
+    min-width: 300px;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    padding: 20px;
+    border-radius: 15px;
+    border: 2px solid #1a2980;
+}
+
+h2 {
+    color: #1a2980;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.5em;
+}
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    grid-template-rows: repeat(10, 1fr);
+    gap: 2px;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto 20px;
+    background-color: #1a2980;
+    padding: 5px;
+    border-radius: 5px;
+    border: 3px solid #0d1b4e;
+}
+
+.cell {
+    aspect-ratio: 1;
+    background-color: #4dabf7;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.cell:hover {
+    transform: scale(1.05);
+    background-color: #74c0fc;
+}
+
+.cell.ship {
+    background-color: #495057;
+    border: 2px solid #212529;
+}
+
+.cell.hit {
+    background-color: #ff6b6b;
+    position: relative;
+}
+
+.cell.hit::after {
+    content: '✕';
+    color: white;
+    font-size: 1.2em;
+}
+
+.cell.miss {
+    background-color: #adb5bd;
+    position: relative;
+}
+
+.cell.miss::after {
+    content: '•';
+    color: white;
+    font-size: 1.5em;
+}
+
+.cell.ship.hit {
+    background-color: #e03131;
+}
+
+.ship-selection {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+    border: 2px solid #26d0ce;
+}
+
+.ships-to-place {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.ship-item {
+    padding: 10px 15px;
+    background: linear-gradient(135deg, #1a2980, #26d0ce);
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    font-weight: 500;
+}
+
+.ship-item:hover {
+    transform: translateX(5px);
+    background: linear-gradient(135deg, #26d0ce, #1a2980);
+}
+
+.ship-item.selected {
+    background: linear-gradient(135deg, #ff6b6b, #e03131);
+    box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+}
+
+.controls {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+button {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #1a2980, #26d0ce);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 150px;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(135deg, #26d0ce, #1a2980);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button:disabled {
+    background: #adb5bd;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+#start-btn:not(:disabled) {
+    background: linear-gradient(135deg, #40c057, #2f9e44);
+}
+
+#start-btn:not(:disabled):hover {
+    background: linear-gradient(135deg, #2f9e44, #40c057);
+}
+
+.computer-info {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 20px;
+    border: 2px solid #26d0ce;
+}
+
+.game-log {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    padding: 20px;
+    border-radius: 15px;
+    border: 2px solid #1a2980;
+    margin-bottom: 30px;
+}
+
+#log {
+    height: 200px;
+    overflow-y: auto;
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    line-height: 1.6;
+    border: 1px solid #dee2e6;
+}
+
+.log-entry {
+    margin-bottom: 8px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    animation: fadeIn 0.5s ease;
+}
+
+.log-player {
+    background-color: #d1ecf1;
+    border-left: 4px solid #17a2b8;
+}
+
+.log-computer {
+    background-color: #f8d7da;
+    border-left: 4px solid #dc3545;
+}
+
+.log-info {
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding-top: 20px;
+    border-top: 3px solid #1a2980;
+}
+
+.legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.legend-item .cell {
+    width: 25px;
+    height: 25px;
+    cursor: default;
+}
+
+.legend-item .cell:hover {
+    transform: none;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    background: white;
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    animation: slideIn 0.5s ease;
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.close {
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    font-size: 28px;
+    cursor: pointer;
+    color: #1a2980;
+}
+
+.close:hover {
+    color: #26d0ce;
+}
+
+.modal-content h2 {
+    color: #1a2980;
+    margin-bottom: 20px;
+}
+
+.modal-content ul {
+    list-style-type: none;
+    padding-left: 20px;
+}
+
+.modal-content li {
+    margin-bottom: 12px;
+    padding-left: 25px;
+    position: relative;
+}
+
+.modal-content li:before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: #26d0ce;
+    font-weight: bold;
+}
+
+@media (max-width: 1200px) {
+    .boards-container {
+        flex-direction: column;
     }
 
-    handlePlayerBoardHover(x, y) {
-        if (this.gameStarted || !this.currentShip) return;
-        
-        const cells = document.querySelectorAll('#player-board .cell');
-        cells.forEach(cell => cell.classList.remove('preview'));
-        
-        if (this.canPlaceShip(x, y, this.currentShip, this.isHorizontal)) {
-            const positions = this.getShipPositions(x, y, this.currentShip, this.isHorizontal);
-            positions.forEach(([posX, posY]) => {
-                const cell = document.querySelector(`#player-board .cell[data-x="${posX}"][data-y="${posY}"]`);
-                if (cell) cell.classList.add('preview');
-            });
-        }
+    .player-section, .computer-section {
+        width: 100%;
     }
 
-    handleComputerBoardClick(x, y) {
-        if (!this.gameStarted  !this.playerTurn  this.computerBoard[y][x] > 1) return;
-
-        this.shots.player++;
-        document.getElementById('player-shots').textContent = this.shots.player;
-        
-        if (this.computerBoard[y][x] === 1) {
-            this.computerBoard[y][x] = 2;
-            this.hits.player++;
-            this.logMessage(`Вы попали в корабль противника! (${x}, ${y})`, 'player');
-            
-            if (this.isShipSunk(x, y, false)) {
-                this.logMessage('Вы потопили корабль противника!', 'player');
-            }
-            
-            if (this.checkWin(true)) {
-                return;
-            }
-        } else {
-            this.computerBoard[y][x] = 3;
-            this.logMessage(`Вы промахнулись. (${x}, ${y})`, 'player');
-            this.playerTurn = false;
-            this.updateGameInfo();
-            setTimeout(() => this.computerMove(), 1000);
-        }
-        
-        this.updateBoardDisplay();
-        this.updateHits();
-    }
-
-    computerMove() {
-        if (!this.gameStarted || this.playerTurn) return;
-
-        this.shots.computer++;
-        document.getElementById('computer-shots').textContent = this.shots.computer;
-        
-        // Простой ИИ: сначала ищет раненые клетки
-        let x, y;
-        const hitCells = this.findAdjacentHitCells();
-        
-        if (hitCells.length > 0) {
-            [x, y] = hitCells[0];
-        } else {
-            do {
-                x = Math.floor(Math.random() * this.boardSize);
-                y = Math.floor(Math.random() * this.boardSize);
-            } while (this.playerBoard[y][x] > 1);
-        }
-
-        if (this.playerBoard[y][x] === 1) {
-            this.playerBoard[y][x] = 2;
-            this.hits.computer++;
-            this.logMessage(`Противник попал в ваш корабль! (${x}, ${y})`, 'computer');
-            
-            if (this.isShipSunk(x, y, true)) {
-                this.logMessage('Противник потопил ваш корабль!', 'computer');
-            }
-            
-            if (this.checkWin(false)) {
-                return;
-            }
-            
-            // Компьютер продолжает ход при попадании
-            setTimeout(() => this.computerMove(), 1500);
-        } else {
-            this.playerBoard[y][x] = 3;
-            this.logMessage(`Противник промахнулся. (${x}, ${y})`, 'computer');
-            this.playerTurn = true;
-        }
-        
-        this.updateBoardDisplay();
-        this.updateGameInfo();
-        this.updateHits();
-    }
-
-    findAdjacentHitCells() {
-        const cells = [];
-        for (let y = 0; y < this.boardSize; y++) {
-            for (let x = 0; x < this.boardSize; x++) {
-                if (this.playerBoard[y][x] === 2) {
-                    // Проверяем соседние клетки
-                    const neighbors = [
-                        [x-1, y], [x+1, y], [x, y-1], [x, y+1]
-                    ];
-                    
-                    for (const [nx, ny] of neighbors) {
-                        if (nx >= 0 && nx < this.boardSize && ny >= 0 && ny < this.boardSize) {
-                            if (this.playerBoard[ny][nx] < 2) {
-                                cells.push([nx, ny]);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return cells;
-    }
-canPlaceShip(x, y, size, horizontal) {
-        const positions = this.getShipPositions(x, y, size, horizontal);
-        
-        for (const [posX, posY] of positions) {
-            if (posX < 0  posX >= this.boardSize  posY < 0 || posY >= this.boardSize) {
-                return false;
-            }
-            
-            // Проверка на соприкосновение с другими кораблями
-            for (let dy = -1; dy <= 1; dy++) {
-                for (let dx = -1; dx <= 1; dx++) {
-                    const checkX = posX + dx;
-                    const checkY = posY + dy;
-                    
-                    if (checkX >= 0 && checkX < this.boardSize && 
-                        checkY >= 0 && checkY < this.boardSize) {
-                        if (this.playerBoard[checkY][checkX] === 1) {
-                            return false;
-                        }
-                    }
-                }
-            }
-        }
-        
-        return true;
-    }
-
-    placeShip(x, y, size, horizontal, isPlayer = false) {
-        const positions = this.getShipPositions(x, y, size, horizontal);
-        const ship = [];
-        
-        for (const [posX, posY] of positions) {
-            if (isPlayer) {
-                this.playerBoard[posY][posX] = 1;
-            } else {
-                this.computerBoard[posY][posX] = 1;
-            }
-            ship.push([posX, posY]);
-        }
-        
-        if (isPlayer) {
-            this.playerShips.push({ positions: ship, hits: Array(size).fill(false) });
-        } else {
-            this.computerShips.push({ positions: ship, hits: Array(size).fill(false) });
-        }
-    }
-
-    getShipPositions(x, y, size, horizontal) {
-        const positions = [];
-        for (let i = 0; i < size; i++) {
-            positions.push(horizontal ? [x + i, y] : [x, y + i]);
-        }
-        return positions;
-    }
-
-    isShipSunk(x, y, isPlayer) {
-        const ships = isPlayer ? this.playerShips : this.computerShips;
-        const board = isPlayer ? this.playerBoard : this.computerBoard;
-        
-        for (const ship of ships) {
-            for (let i = 0; i < ship.positions.length; i++) {
-                const [shipX, shipY] = ship.positions[i];
-                if (shipX === x && shipY === y) {
-                    ship.hits[i] = true;
-                    
-                    if (ship.hits.every(hit => hit)) {
-                        return true;
-                    }
-                    return false;
-                }
-            }
-        }
-        return false;
-    }
-
-    checkWin(isPlayer) {
-        const ships = isPlayer ? this.computerShips : this.playerShips;
-        const allSunk = ships.every(ship => ship.hits.every(hit => hit));
-        
-        if (allSunk) {
-            this.gameStarted = false;
-            const winner = isPlayer ? 'Игрок' : 'Компьютер';
-            this.logMessage(`${winner} победил! Игра окончена.`, 'info');
-            document.getElementById('status').textContent = Победил: ${winner};
-            return true;
-        }
-        return false;
-    }
-
-    generateComputerShips() {
-        for (const size of this.ships) {
-            let placed = false;
-            while (!placed) {
-                const x = Math.floor(Math.random() * this.boardSize);
-                const y = Math.floor(Math.random() * this.boardSize);
-                const horizontal = Math.random() < 0.5;
-                
-                if (this.canPlaceShip(x, y, size, horizontal)) {
-                    this.placeShip(x, y, size, horizontal, false);
-                    placed = true;
-                }
-            }
-        }
-    }
-
-    updateShipSelection() {
-        const placedShips = this.playerShips.length;
-        const shipsToPlace = this.ships.slice(placedShips);
-        
-        document.querySelectorAll('.ship-item').forEach(item => {
-            const size = parseInt(item.dataset.size);
-            const count = shipsToPlace.filter(s => s === size).length;
-            item.textContent = ${size}-палубный (${count} шт);
-            
-            if (count === 0) {
-                item.style.
-display = 'none';
-            } else {
-                item.style.display = 'block';
-                item.classList.remove('selected');
-            }
-        });
-        
-        // Выбираем первый доступный корабль
-        if (shipsToPlace.length > 0 && !this.currentShip) {
-            this.currentShip = shipsToPlace[0];
-            document.querySelector(`.ship-item[data-size="${this.currentShip}"]`)?.classList.add('selected');
-        }
-    }
-
-    updateGameInfo() {
-        document.getElementById('turn').textContent = this.playerTurn ? 'Игрок' : 'Компьютер';
-        document.getElementById('turn').style.color = this.playerTurn ? '#26d0ce' : '#ff6b6b';
-        
-        if (!this.gameStarted) {
-            document.getElementById('status').textContent = 'Расставьте корабли';
-        } else {
-            document.getElementById('status').textContent = this.playerTurn ? 'Ваш ход' : 'Ход противника';
-        }
-    }
-
-    updateHits() {
-        document.getElementById('hits').textContent = this.hits.player;
-    }
-
-    logMessage(message, type) {
-        const log = document.getElementById('log');
-        const entry = document.createElement('div');
-        entry.className = log-entry log-${type};
-        entry.textContent = [${new Date().toLocaleTimeString()}] ${message};
-        log.appendChild(entry);
-        log.scrollTop = log.scrollHeight;
-    }
-
-    setupEventListeners() {
-        // Выбор корабля
-        document.querySelectorAll('.ship-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const size = parseInt(item.dataset.size);
-                if (this.ships.slice(this.playerShips.length).includes(size)) {
-                    document.querySelectorAll('.ship-item').forEach(i => i.classList.remove('selected'));
-                    item.classList.add('selected');
-                    this.currentShip = size;
-                }
-            });
-        });
-
-        // Поворот корабля
-        document.getElementById('rotate-btn').addEventListener('click', () => {
-            this.isHorizontal = !this.isHorizontal;
-            this.logMessage(`Корабль повёрнут: ${this.isHorizontal ? 'горизонтально' : 'вертикально'}`, 'info');
-        });
-
-        // Случайная расстановка
-        document.getElementById('random-btn').addEventListener('click', () => {
-            this.resetGame();
-            this.generateComputerShips();
-            
-            // Случайная расстановка для игрока
-            for (const size of this.ships) {
-                let placed = false;
-                while (!placed) {
-                    const x = Math.floor(Math.random() * this.boardSize);
-                    const y = Math.floor(Math.random() * this.boardSize);
-                    const horizontal = Math.random() < 0.5;
-                    
-                    if (this.canPlaceShip(x, y, size, horizontal)) {
-                        this.placeShip(x, y, size, horizontal, true);
-                        placed = true;
-                    }
-                }
-            }
-            
-            this.updateBoardDisplay();
-            this.updateShipSelection();
-            document.getElementById('start-btn').disabled = false;
-            this.logMessage('Корабли расставлены случайным образом!', 'info');
-        });
-
-        // Начать игру
-        document.getElementById('start-btn').addEventListener('click', () => {
-            if (this.playerShips.length === this.ships.length) {
-                this.gameStarted = true;
-                this.playerTurn = true;
-                document.getElementById('start-btn').disabled = true;
-                document.getElementById('rotate-btn').disabled = true;
-                document.querySelectorAll('.ship-item').forEach(item => item.style.display = 'none');
-                this.logMessage('Игра началась! Ваш ход.', 'info');
-                this.updateGameInfo();
-            }
-        });
-
-        // Новая игра
-        document.getElementById('new-game-btn').addEventListener('click', () => {
-            this.resetGame();
-            this.
-logMessage('Новая игра началась! Расставьте ваши корабли.', 'info');
-        });
-
-        // Правила
-        const modal = document.getElementById('instructions-modal');
-        const btn = document.getElementById('instructions-btn');
-        const span = document.getElementsByClassName('close')[0];
-
-        btn.onclick = () => modal.style.display = 'block';
-        span.onclick = () => modal.style.display = 'none';
-        window.onclick = (event) => {
-            if (event.target == modal) modal.style.display = 'none';
-        };
-    }
-
-    resetGame() {
-        this.playerBoard = this.createEmptyBoard();
-        this.computerBoard = this.createEmptyBoard();
-        this.playerShips = [];
-        this.computerShips = [];
-        this.currentShip = null;
-        this.isHorizontal = true;
-        this.gameStarted = false;
-        this.playerTurn = true;
-        this.shots = { player: 0, computer: 0 };
-        this.hits = { player: 0, computer: 0 };
-        
-        this.createBoards();
-        this.updateShipSelection();
-        this.updateGameInfo();
-        this.updateHits();
-        
-        document.getElementById('player-shots').textContent = '0';
-        document.getElementById('computer-shots').textContent = '0';
-        document.getElementById('start-btn').disabled = true;
-        document.getElementById('rotate-btn').disabled = false;
-        
-        const log = document.getElementById('log');
-        log.innerHTML = '';
+    .board {
+        max-width: 100%;
     }
 }
 
-// Инициализация игры при загрузке страницы
-document.addEventListener('DOMContentLoaded', () => {
-    const game = new SeaBattle();
-    window.seaBattle = game; // Для отладки в консоли
-});
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+
+    h1 {
+        font-size: 2em;
+    }
+
+    .game-info {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .info-item {
+        min-width: auto;
+        width: 100%;
+    }
+
+    .controls {
+        flex-direction: column;
+    }
+
+    button {
+        width: 100%;
+    }
+
+    footer {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .legend {
+        justify-content: center;
+    }
+}
+
+.cell.preview {
+    background-color: #666 !important;
+    border: 2px solid #333;
+}
