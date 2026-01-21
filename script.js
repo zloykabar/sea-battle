@@ -78,32 +78,24 @@ class SeaBattle {
         this.updateBoardDisplay();
     }
 
-    // ИСПРАВЛЕНО: Правильная проверка расстановки кораблей
     canPlaceShip(startX, startY, size, horizontal, isPlayer = true) {
-        // Проверяем все клетки, которые займет корабль
         for (let i = 0; i < size; i++) {
             const x = horizontal ? startX + i : startX;
             const y = horizontal ? startY : startY + i;
             
-            // Проверка границ поля
             if (x < 0 || x >= this.boardSize || y < 0 || y >= this.boardSize) {
                 return false;
             }
             
-            // Получаем текущую доску (игрока или компьютера)
             const board = isPlayer ? this.playerBoard : this.computerBoard;
             
-            // Проверяем клетку и все соседние клетки
             for (let dy = -1; dy <= 1; dy++) {
                 for (let dx = -1; dx <= 1; dx++) {
                     const checkX = x + dx;
                     const checkY = y + dy;
                     
-                    // Проверяем, что координаты в пределах поля
                     if (checkX >= 0 && checkX < this.boardSize && 
                         checkY >= 0 && checkY < this.boardSize) {
-                        
-                        // Если в этой клетке уже есть корабль - нельзя ставить
                         if (board[checkY][checkX] === 1) {
                             return false;
                         }
@@ -122,7 +114,6 @@ class SeaBattle {
             this.updateShipSelection();
             this.updateBoardDisplay();
             
-            // Убираем предпросмотр
             document.querySelectorAll('#player-board .cell.preview').forEach(cell => {
                 cell.classList.remove('preview');
                 cell.style.backgroundColor = '';
@@ -133,20 +124,18 @@ class SeaBattle {
                 this.logMessage('Все корабли расставлены! Нажмите "Начать игру"', 'info');
             }
         } else if (this.currentShip) {
-            this.logMessage('Нельзя ставить корабли впритык! Должна быть минимум одна клетка между кораблями.', 'info');
+            this.logMessage('Нельзя ставить корабли впритык!', 'info');
         }
     }
 
     handlePlayerBoardHover(x, y) {
         if (this.gameStarted || !this.currentShip) return;
         
-        // Убираем предыдущий предпросмотр
         document.querySelectorAll('#player-board .cell.preview').forEach(cell => {
             cell.classList.remove('preview');
             cell.style.backgroundColor = '';
         });
         
-        // Показываем новый предпросмотр, если можно поставить
         if (this.canPlaceShip(x, y, this.currentShip, this.isHorizontal, true)) {
             const positions = this.getShipPositions(x, y, this.currentShip, this.isHorizontal);
             positions.forEach(([posX, posY]) => {
@@ -170,13 +159,11 @@ class SeaBattle {
             this.hits.player++;
             this.logMessage(`Вы попали в корабль противника! (${x + 1}, ${y + 1})`, 'player');
             
-            // Проверяем, потоплен ли корабль
             const shipSunk = this.isShipSunk(x, y, false);
             if (shipSunk) {
                 this.logMessage('Вы потопили корабль противника!', 'player');
             }
             
-            // Проверяем победу после каждого попадания
             if (this.checkWin(true)) {
                 return;
             }
@@ -221,7 +208,6 @@ class SeaBattle {
                 this.logMessage('Противник потопил ваш корабль!', 'computer');
             }
             
-            // Проверяем победу компьютера
             if (this.checkWin(false)) {
                 return;
             }
@@ -297,12 +283,12 @@ class SeaBattle {
         return positions;
     }
 
-    // ИСПРАВЛЕНО: Метод проверки потопления корабля
+    // ИСПРАВЛЕННЫЙ метод: Проверка потопления с отметкой вокруг
     isShipSunk(x, y, isPlayer) {
         const ships = isPlayer ? this.playerShips : this.computerShips;
+        const board = isPlayer ? this.playerBoard : this.computerBoard;
         
         for (const ship of ships) {
-            // Находим индекс клетки в корабле
             let cellIndex = -1;
             for (let i = 0; i < ship.positions.length; i++) {
                 const [shipX, shipY] = ship.positions[i];
@@ -312,14 +298,17 @@ class SeaBattle {
                 }
             }
             
-            // Если нашли клетку, отмечаем её как подбитую
             if (cellIndex !== -1) {
                 ship.hits[cellIndex] = true;
                 
-                // Проверяем, все ли клетки корабля подбиты
                 const allHit = ship.hits.every(hit => hit === true);
+                
                 if (allHit && !ship.sunk) {
                     ship.sunk = true;
+                    
+                    // ОТМЕЧАЕМ КЛЕТКИ ВОКРУГ ПОТОПЛЕННОГО КОРАБЛЯ
+                    this.markAroundSunkShip(ship, isPlayer);
+                    
                     return true;
                 }
                 return false;
@@ -328,11 +317,37 @@ class SeaBattle {
         return false;
     }
 
-    // ИСПРАВЛЕНО: Метод проверки победы
+    // НОВЫЙ метод: Отмечает клетки вокруг потопленного корабля
+    markAroundSunkShip(ship, isPlayer) {
+        const board = isPlayer ? this.playerBoard : this.computerBoard;
+        
+        // Для каждой клетки корабля
+        for (const [shipX, shipY] of ship.positions) {
+            // Проверяем все соседние клетки (3x3 область вокруг клетки)
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    const x = shipX + dx;
+                    const y = shipY + dy;
+                    
+                    // Проверяем границы поля
+                    if (x >= 0 && x < this.boardSize && y >= 0 && y < this.boardSize) {
+                        // Если клетка пустая (0), отмечаем как промах (3)
+                        // Не трогаем уже подбитые клетки (2) и промахи (3)
+                        if (board[y][x] === 0) {
+                            board[y][x] = 3;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Сразу обновляем отображение
+        this.updateBoardDisplay();
+    }
+
     checkWin(isPlayer) {
         const ships = isPlayer ? this.computerShips : this.playerShips;
         
-        // Проверяем, все ли корабли потоплены
         const allSunk = ships.every(ship => {
             return ship.hits.every(hit => hit === true);
         });
@@ -341,13 +356,12 @@ class SeaBattle {
             this.gameStarted = false;
             const winner = isPlayer ? 'Игрок' : 'Компьютер';
             
-            // Показываем все корабли компьютера при победе игрока
             if (isPlayer) {
                 this.revealComputerShips();
             }
             
             this.logMessage(`🎉 ${winner} победил! 🎉`, 'info');
-            this.logMessage('Игра окончена. Нажмите "Новая игра", чтобы начать заново.', 'info');
+            this.logMessage('Игра окончена. Нажмите "Новая игра".', 'info');
             
             document.getElementById('status').textContent = `Победил: ${winner}`;
             document.getElementById('start-btn').disabled = true;
@@ -357,7 +371,6 @@ class SeaBattle {
         return false;
     }
 
-    // Показывает все корабли компьютера при победе
     revealComputerShips() {
         const computerCells = document.querySelectorAll('#computer-board .cell');
         for (let y = 0; y < this.boardSize; y++) {
@@ -373,11 +386,9 @@ class SeaBattle {
         }
     }
 
-    // ИСПРАВЛЕНО: Генерация кораблей компьютера с правильной проверкой
     generateComputerShips() {
         console.log('Генерация кораблей компьютера...');
         
-        // Сбрасываем корабли компьютера
         this.computerShips = [];
         for (let y = 0; y < this.boardSize; y++) {
             for (let x = 0; x < this.boardSize; x++) {
@@ -395,17 +406,15 @@ class SeaBattle {
                 const y = Math.floor(Math.random() * this.boardSize);
                 const horizontal = Math.random() < 0.5;
                 
-                // Используем исправленный метод canPlaceShip с isPlayer=false
                 if (this.canPlaceShip(x, y, size, horizontal, false)) {
                     this.placeShip(x, y, size, horizontal, false);
                     placed = true;
-                    console.log(`Корабль ${size}-палубный размещен в (${x},${y})`);
                 }
                 attempts++;
             }
             
             if (!placed) {
-                console.error(`Не удалось разместить корабль размером ${size} после ${maxAttempts} попыток`);
+                console.error(`Не удалось разместить корабль размером ${size}`);
             }
         }
         console.log('Корабли компьютера расставлены');
@@ -554,7 +563,6 @@ class SeaBattle {
             randomBtn.addEventListener('click', () => {
                 this.resetGame();
                 
-                // Расставляем корабли игрока случайно с правильной проверкой
                 for (const size of this.ships) {
                     let placed = false;
                     let attempts = 0;
@@ -624,7 +632,6 @@ class SeaBattle {
     }
 
     resetGame() {
-        // Сбрасываем все данные
         this.playerBoard = this.createEmptyBoard();
         this.computerBoard = this.createEmptyBoard();
         this.playerShips = [];
@@ -637,33 +644,26 @@ class SeaBattle {
         this.hits = { player: 0, computer: 0 };
         this.selectedShipElement = null;
         
-        // Пересоздаем поля
         this.createBoards();
         this.updateShipSelection();
         this.updateGameInfo();
         this.updateHits();
         
-        // Сбрасываем статистику
         document.getElementById('player-shots').textContent = '0';
         document.getElementById('computer-shots').textContent = '0';
         
-        // Включаем кнопки
         document.getElementById('start-btn').disabled = true;
         document.getElementById('rotate-btn').disabled = false;
         
-        // Показываем выбор кораблей
         document.querySelector('.ships-to-place').style.display = 'block';
         
-        // Очищаем лог
         const log = document.getElementById('log');
         if (log) log.innerHTML = '';
         
-        // Генерируем новые корабли компьютера
         this.generateComputerShips();
         
         this.logMessage('Новая игра началась! Расставьте ваши корабли.', 'info');
         
-        // Выбираем первый корабль
         setTimeout(() => {
             const firstShip = document.querySelector('.ship-item');
             if (firstShip) {
