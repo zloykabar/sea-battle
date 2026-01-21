@@ -1,451 +1,118 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Морской бой</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-ship"></i> Морской бой</h1>
+            <div class="game-info">
+                <div class="info-item">
+                    <span class="label">Ход:</span>
+                    <span id="turn">Игрок</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Статус:</span>
+                    <span id="status">Расставьте корабли</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Попаданий:</span>
+                    <span id="hits">0</span>
+                </div>
+            </div>
+        </header>
 
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #1a2980, #26d0ce);
-    color: #333;
-    min-height: 100vh;
-    padding: 20px;
-}
+        <main>
+            <div class="boards-container">
+                <div class="player-section">
+                    <h2><i class="fas fa-user"></i> Ваше поле</h2>
+                    <div class="board" id="player-board"></div>
+                    <div class="ship-selection" id="ship-selection">
+                        <h3>Корабли для расстановки:</h3>
+                        <div class="ships-to-place">
+                            <div class="ship-item" data-size="4">4-палубный (1 шт)</div>
+                            <div class="ship-item" data-size="3">3-палубный (2 шт)</div>
+                            <div class="ship-item" data-size="2">2-палубный (3 шт)</div>
+                            <div class="ship-item" data-size="1">1-палубный (4 шт)</div>
+                        </div>
+                        <div class="controls">
+                            <button id="rotate-btn">
+                                <i class="fas fa-sync-alt"></i> Повернуть
+                            </button>
+                            <button id="random-btn">
+                                <i class="fas fa-random"></i> Случайно
+                            </button>
+                            <button id="start-btn" disabled>
+                                <i class="fas fa-play"></i> Начать игру
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-.container {
-    max-width: 1400px;
-    margin: 0 auto;
-    background-color: rgba(255, 255, 255, 0.95);
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    padding: 30px;
-}
+                <div class="computer-section">
+                    <h2><i class="fas fa-robot"></i> Противник</h2>
+                    <div class="board" id="computer-board"></div>
+                    <div class="computer-info">
+                        <h3>Статистика:</h3>
+                        <p>Ваши выстрелы: <span id="player-shots">0</span></p>
+                        <p>Выстрелы противника: <span id="computer-shots">0</span></p>
+                    </div>
+                </div>
+            </div>
 
-header {
-    text-align: center;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 3px solid #1a2980;
-}
+            <div class="game-log">
+                <h3><i class="fas fa-clipboard-list"></i> Журнал игры</h3>
+                <div id="log"></div>
+            </div>
+        </main>
 
-h1 {
-    color: #1a2980;
-    font-size: 3em;
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 15px;
-}
+        <footer>
+            <button id="new-game-btn">
+                <i class="fas fa-redo"></i> Новая игра
+            </button>
+            <button id="instructions-btn">
+                <i class="fas fa-question-circle"></i> Правила
+            </button>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="cell ship"></div>
+                    <span>Корабль</span>
+                </div>
+                <div class="legend-item">
+                    <div class="cell hit"></div>
+                    <span>Попадание</span>
+                </div>
+                <div class="legend-item">
+                    <div class="cell miss"></div>
+                    <span>Промах</span>
+                </div>
+            </div>
+        </footer>
+    </div>
 
-h1 i {
-    color: #26d0ce;
-}
+    <div id="instructions-modal" class="modal">
+        <div class="modal-content">
+<span class="close">&times;</span>
+            <h2><i class="fas fa-book"></i> Правила игры</h2>
+            <ul>
+                <li>Расставьте все корабли на своём поле</li>
+                <li>Корабли не могут касаться друг друга даже углами</li>
+                <li>Игроки ходят по очереди</li>
+                <li>Цель - первым потопить все корабли противника</li>
+                <li>При попадании ход продолжается</li>
+                <li>4-палубный - 1 корабль</li>
+                <li>3-палубный - 2 корабля</li>
+                <li>2-палубный - 3 корабля</li>
+                <li>1-палубный - 4 корабля</li>
+            </ul>
+        </div>
+    </div>
 
-.game-info {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-    flex-wrap: wrap;
-    background: linear-gradient(135deg, #f0f8ff, #e6f7ff);
-    padding: 15px;
-    border-radius: 15px;
-    border: 2px solid #1a2980;
-}
-
-.info-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 10px 20px;
-    background: white;
-    border-radius: 10px;
-    min-width: 150px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.label {
-    font-weight: 600;
-    color: #1a2980;
-    margin-bottom: 5px;
-    font-size: 0.9em;
-}
-
-#turn, #status, #hits {
-    font-size: 1.2em;
-    font-weight: bold;
-    color: #26d0ce;
-}
-
-.boards-container {
-    display: flex;
-    gap: 40px;
-    margin-bottom: 30px;
-    flex-wrap: wrap;
-}
-
-.player-section, .computer-section {
-    flex: 1;
-    min-width: 300px;
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-    padding: 20px;
-    border-radius: 15px;
-    border: 2px solid #1a2980;
-}
-
-h2 {
-    color: #1a2980;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 1.5em;
-}
-
-.board {
-    display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    grid-template-rows: repeat(10, 1fr);
-    gap: 2px;
-    width: 100%;
-    max-width: 400px;
-    margin: 0 auto 20px;
-    background-color: #1a2980;
-    padding: 5px;
-    border-radius: 5px;
-    border: 3px solid #0d1b4e;
-}
-
-.cell {
-    aspect-ratio: 1;
-    background-color: #4dabf7;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-}
-
-.cell:hover {
-    transform: scale(1.05);
-    background-color: #74c0fc;
-}
-
-.cell.ship {
-    background-color: #495057;
-    border: 2px solid #212529;
-}
-
-.cell.hit {
-    background-color: #ff6b6b;
-    position: relative;
-}
-
-.cell.hit::after {
-    content: '✕';
-    color: white;
-    font-size: 1.2em;
-}
-
-.cell.miss {
-    background-color: #adb5bd;
-    position: relative;
-}
-
-.cell.miss::after {
-    content: '•';
-    color: white;
-    font-size: 1.5em;
-}
-
-.cell.ship.hit {
-    background-color: #e03131;
-}
-
-.ship-selection {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    margin-top: 20px;
-    border: 2px solid #26d0ce;
-}
-
-.ships-to-place {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin: 15px 0;
-}
-
-.ship-item {
-    padding: 10px 15px;
-    background: linear-gradient(135deg, #1a2980, #26d0ce);
-    color: white;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: transform 0.2s;
-    font-weight: 500;
-}
-
-.ship-item:hover {
-    transform: translateX(5px);
-    background: linear-gradient(135deg, #26d0ce, #1a2980);
-}
-
-.ship-item.selected {
-    background: linear-gradient(135deg, #ff6b6b, #e03131);
-    box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
-}
-
-.controls {
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
-}
-
-button {
-    padding: 12px 24px;
-    background: linear-gradient(135deg, #1a2980, #26d0ce);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1em;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    min-width: 150px;
-}
-
-button:hover {
-transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    background: linear-gradient(135deg, #26d0ce, #1a2980);
-}
-
-button:active {
-    transform: translateY(0);
-}
-
-button:disabled {
-    background: #adb5bd;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-#start-btn:not(:disabled) {
-    background: linear-gradient(135deg, #40c057, #2f9e44);
-}
-
-#start-btn:not(:disabled):hover {
-    background: linear-gradient(135deg, #2f9e44, #40c057);
-}
-
-.computer-info {
-    background: white;
-    padding: 15px;
-    border-radius: 10px;
-    margin-top: 20px;
-    border: 2px solid #26d0ce;
-}
-
-.game-log {
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-    padding: 20px;
-    border-radius: 15px;
-    border: 2px solid #1a2980;
-    margin-bottom: 30px;
-}
-
-#log {
-    height: 200px;
-    overflow-y: auto;
-    background: white;
-    padding: 15px;
-    border-radius: 10px;
-    font-family: 'Courier New', monospace;
-    font-size: 0.9em;
-    line-height: 1.6;
-    border: 1px solid #dee2e6;
-}
-
-.log-entry {
-    margin-bottom: 8px;
-    padding: 5px 10px;
-    border-radius: 5px;
-    animation: fadeIn 0.5s ease;
-}
-
-.log-player {
-    background-color: #d1ecf1;
-    border-left: 4px solid #17a2b8;
-}
-
-.log-computer {
-    background-color: #f8d7da;
-    border-left: 4px solid #dc3545;
-}
-
-.log-info {
-    background-color: #fff3cd;
-    border-left: 4px solid #ffc107;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 20px;
-    padding-top: 20px;
-    border-top: 3px solid #1a2980;
-}
-
-.legend {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.legend-item .cell {
-    width: 25px;
-    height: 25px;
-    cursor: default;
-}
-
-.legend-item .cell:hover {
-    transform: none;
-}
-
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    animation: fadeIn 0.3s ease;
-}
-
-.modal-content {
-    background: white;
-    margin: 5% auto;
-    padding: 30px;
-    border-radius: 15px;
-    width: 90%;
-    max-width: 500px;
-    position: relative;
-    animation: slideIn 0.5s ease;
-}
-
-@keyframes slideIn {
-    from { transform: translateY(-50px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-
-.close {
-    position: absolute;
-    right: 20px;
-    top: 15px;
-    font-size: 28px;
-    cursor: pointer;
-    color: #1a2980;
-}
-
-.close:hover {
-    color: #26d0ce;
-}
-
-.modal-content h2 {
-    color: #1a2980;
-    margin-bottom: 20px;
-}
-
-.modal-content ul {
-    list-style-type: none;
-    padding-left: 20px;
-}
-
-.modal-content li {
-    margin-bottom: 12px;
-    padding-left: 25px;
-    position: relative;
-}
-
-.modal-content li:before {
-    content: '→';
-    position: absolute;
-    left: 0;
-    color: #26d0ce;
-    font-weight: bold;
-}
-
-@media (max-width: 1200px) {
-    .boards-container {
-        flex-direction: column;
-    }
-    
-    .player-section, .computer-section {
-        width: 100%;
-    }
-    
-    .board {
-        max-width: 100%;
-    }
-}
-
-@media (max-width: 768px) {
-    .container {
-        padding: 15px;
-    }
-    
-    h1 {
-        font-size: 2em;
-    }
-    
-    .game-info {
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .info-item {
-        min-width: auto;
-        width: 100%;
-    }
-    
-    .controls {
-        flex-direction: column;
-    }
-    
-    button {
-        width: 100%;
-    }
-    
-    footer {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .legend {
-        justify-content: center;
-    }
-}
+    <script src="script.js"></script>
+</body>
+</html>
