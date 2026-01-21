@@ -112,7 +112,26 @@
             </ul>
         </div>
     </div>
-
+<div id="game-result-modal" class="modal">
+    <div class="modal-content result-modal">
+        <h2 id="result-title"><i class="fas fa-trophy"></i> Результат игры</h2>
+        <div id="result-message">
+            <!-- Здесь будет сообщение о результате -->
+        </div>
+        <div class="result-stats">
+            <p><i class="fas fa-crosshairs"></i> Ваши выстрелы: <span id="result-player-shots">0</span></p>
+            <p><i class="fas fa-crosshairs"></i> Выстрелы противника: <span id="result-computer-shots">0</span></p>
+            <p><i class="fas fa-bullseye"></i> Ваши попадания: <span id="result-player-hits">0</span></p>
+            <p><i class="fas fa-bullseye"></i> Попадания противника: <span id="result-computer-hits">0</span></p>
+        </div>
+        <button id="play-again-btn" class="result-btn">
+            <i class="fas fa-redo"></i> Играть снова
+        </button>
+        <button id="close-result-btn" class="result-btn secondary">
+            <i class="fas fa-times"></i> Закрыть
+        </button>
+    </div>
+</div>
     <script src="script.js"></script>
 </body>
 </html>
