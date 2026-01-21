@@ -24,7 +24,7 @@ class SeaBattle {
         
         // Имена игроков
         this.playerName = "Капитан";
-        this.computerName = "Пират";
+        this.computerName = "Компьютер";
         
         this.init();
     }
