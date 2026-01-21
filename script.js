@@ -1,4 +1,3 @@
-// Убедитесь что DOM полностью загружен
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM загружен, начинаем игру...');
     
