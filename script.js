@@ -22,6 +22,10 @@ class SeaBattle {
         this.hits = { player: 0, computer: 0 };
         this.selectedShipElement = null;
         
+        // Имена игроков
+        this.playerName = "Капитан";
+        this.computerName = "Компьютер";
+        
         this.init();
     }
 
@@ -36,7 +40,10 @@ class SeaBattle {
             this.updateShipSelection();
             this.updateGameInfo();
             this.generateComputerShips();
-            this.logMessage('Игра готова! Расставьте ваши корабли.', 'info');
+            this.logMessage(`Добро пожаловать, ${this.playerName}! Расставьте ваши корабли.`, 'info');
+            
+            // Обновляем имена в интерфейсе
+            this.updatePlayerNames();
             
             setTimeout(() => {
                 const firstShip = document.querySelector('.ship-item');
@@ -48,6 +55,14 @@ class SeaBattle {
             console.error('Ошибка при инициализации:', error);
             this.logMessage('Ошибка загрузки игры. Перезагрузите страницу.', 'info');
         }
+    }
+
+    // Обновляем отображение имен
+    updatePlayerNames() {
+        document.querySelector('.player-section h2').innerHTML = 
+            `<i class="fas fa-user"></i> ${this.playerName}`;
+        document.querySelector('.computer-section h2').innerHTML = 
+            `<i class="fas fa-robot"></i> ${this.computerName}`;
     }
 
     createBoards() {
@@ -157,11 +172,11 @@ class SeaBattle {
         if (this.computerBoard[y][x] === 1) {
             this.computerBoard[y][x] = 2;
             this.hits.player++;
-            this.logMessage(`Вы попали в корабль противника! (${x + 1}, ${y + 1})`, 'player');
+            this.logMessage(`${this.playerName} попал в корабль ${this.computerName.toLowerCase()}! (${x + 1}, ${y + 1})`, 'player');
             
             const shipSunk = this.isShipSunk(x, y, false);
             if (shipSunk) {
-                this.logMessage('Вы потопили корабль противника!', 'player');
+                this.logMessage(`${this.playerName} потопил корабль ${this.computerName.toLowerCase()}!`, 'player');
             }
             
             if (this.checkWin(true)) {
@@ -169,7 +184,7 @@ class SeaBattle {
             }
         } else {
             this.computerBoard[y][x] = 3;
-            this.logMessage(`Вы промахнулись. (${x + 1}, ${y + 1})`, 'player');
+            this.logMessage(`${this.playerName} промахнулся. (${x + 1}, ${y + 1})`, 'player');
             this.playerTurn = false;
             this.updateGameInfo();
             
@@ -201,11 +216,11 @@ class SeaBattle {
         if (this.playerBoard[y][x] === 1) {
             this.playerBoard[y][x] = 2;
             this.hits.computer++;
-            this.logMessage(`Противник попал в ваш корабль! (${x + 1}, ${y + 1})`, 'computer');
+            this.logMessage(`${this.computerName} попал в корабль ${this.playerName.toLowerCase()}! (${x + 1}, ${y + 1})`, 'computer');
             
             const shipSunk = this.isShipSunk(x, y, true);
             if (shipSunk) {
-                this.logMessage('Противник потопил ваш корабль!', 'computer');
+                this.logMessage(`${this.computerName} потопил корабль ${this.playerName.toLowerCase()}!`, 'computer');
             }
             
             if (this.checkWin(false)) {
@@ -215,7 +230,7 @@ class SeaBattle {
             setTimeout(() => this.computerMove(), 1500);
         } else {
             this.playerBoard[y][x] = 3;
-            this.logMessage(`Противник промахнулся. (${x + 1}, ${y + 1})`, 'computer');
+            this.logMessage(`${this.computerName} промахнулся. (${x + 1}, ${y + 1})`, 'computer');
             this.playerTurn = true;
         }
         
@@ -283,7 +298,6 @@ class SeaBattle {
         return positions;
     }
 
-    // ИСПРАВЛЕННЫЙ метод: Проверка потопления с отметкой вокруг
     isShipSunk(x, y, isPlayer) {
         const ships = isPlayer ? this.playerShips : this.computerShips;
         const board = isPlayer ? this.playerBoard : this.computerBoard;
@@ -305,10 +319,7 @@ class SeaBattle {
                 
                 if (allHit && !ship.sunk) {
                     ship.sunk = true;
-                    
-                    // ОТМЕЧАЕМ КЛЕТКИ ВОКРУГ ПОТОПЛЕННОГО КОРАБЛЯ
                     this.markAroundSunkShip(ship, isPlayer);
-                    
                     return true;
                 }
                 return false;
@@ -317,22 +328,16 @@ class SeaBattle {
         return false;
     }
 
-    // НОВЫЙ метод: Отмечает клетки вокруг потопленного корабля
     markAroundSunkShip(ship, isPlayer) {
         const board = isPlayer ? this.playerBoard : this.computerBoard;
         
-        // Для каждой клетки корабля
         for (const [shipX, shipY] of ship.positions) {
-            // Проверяем все соседние клетки (3x3 область вокруг клетки)
             for (let dy = -1; dy <= 1; dy++) {
                 for (let dx = -1; dx <= 1; dx++) {
                     const x = shipX + dx;
                     const y = shipY + dy;
                     
-                    // Проверяем границы поля
                     if (x >= 0 && x < this.boardSize && y >= 0 && y < this.boardSize) {
-                        // Если клетка пустая (0), отмечаем как промах (3)
-                        // Не трогаем уже подбитые клетки (2) и промахи (3)
                         if (board[y][x] === 0) {
                             board[y][x] = 3;
                         }
@@ -341,7 +346,6 @@ class SeaBattle {
             }
         }
         
-        // Сразу обновляем отображение
         this.updateBoardDisplay();
     }
 
@@ -354,8 +358,13 @@ class SeaBattle {
         
         if (allSunk) {
             this.gameStarted = false;
-            const winner = isPlayer ? 'Игрок' : 'Компьютер';
+            const winner = isPlayer ? this.playerName : this.computerName;
+            const loser = isPlayer ? this.computerName : this.playerName;
             
+            // Показываем окно с результатом
+            this.showGameResult(isPlayer, winner, loser);
+            
+            // Показываем все корабли компьютера при победе игрока
             if (isPlayer) {
                 this.revealComputerShips();
             }
@@ -369,6 +378,73 @@ class SeaBattle {
             return true;
         }
         return false;
+    }
+
+    // НОВЫЙ метод: Показывает окно с результатом игры
+    showGameResult(isPlayerWon, winner, loser) {
+        const modal = document.getElementById('game-result-modal');
+        const resultTitle = document.getElementById('result-title');
+        const resultMessage = document.getElementById('result-message');
+        
+        if (!modal || !resultTitle || !resultMessage) return;
+        
+        // Обновляем статистику
+        document.getElementById('result-player-shots').textContent = this.shots.player;
+        document.getElementById('result-computer-shots').textContent = this.shots.computer;
+        document.getElementById('result-player-hits').textContent = this.hits.player;
+        document.getElementById('result-computer-hits').textContent = this.hits.computer;
+        
+        // Устанавливаем заголовок и сообщение
+        if (isPlayerWon) {
+            resultTitle.innerHTML = '<i class="fas fa-trophy"></i> Победа!';
+            resultMessage.innerHTML = `
+                <h3>🎉 Поздравляем, ${winner}!</h3>
+                <p>Вы одержали победу над ${loser}!</p>
+                <p><i class="fas fa-star"></i> Вы потопили все корабли противника!</p>
+            `;
+            resultMessage.className = 'win-message victory-animation';
+        } else {
+            resultTitle.innerHTML = '<i class="fas fa-skull-crossbones"></i> Поражение';
+            resultMessage.innerHTML = `
+                <h3>😔 ${winner} победил!</h3>
+                <p>${loser}, ваши корабли потоплены...</p>
+                <p><i class="fas fa-ship"></i> Попробуйте сыграть еще раз!</p>
+            `;
+            resultMessage.className = 'lose-message defeat-animation';
+        }
+        
+        // Показываем модальное окно
+        modal.style.display = 'block';
+        
+        // Добавляем обработчики для кнопок в окне результата
+        this.setupResultModalListeners();
+    }
+
+    // НОВЫЙ метод: Настройка обработчиков для окна результата
+    setupResultModalListeners() {
+        const modal = document.getElementById('game-result-modal');
+        const playAgainBtn = document.getElementById('play-again-btn');
+        const closeBtn = document.getElementById('close-result-btn');
+        
+        if (playAgainBtn) {
+            playAgainBtn.addEventListener('click', () => {
+                modal.style.display = 'none';
+                this.resetGame();
+            });
+        }
+        
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+        }
+        
+        // Закрытие по клику вне окна
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
     }
 
     revealComputerShips() {
@@ -490,7 +566,7 @@ class SeaBattle {
         const statusElement = document.getElementById('status');
         
         if (turnElement) {
-            turnElement.textContent = this.playerTurn ? 'Игрок' : 'Компьютер';
+            turnElement.textContent = this.playerTurn ? this.playerName : this.computerName;
             turnElement.style.color = this.playerTurn ? '#26d0ce' : '#ff6b6b';
         }
         
@@ -498,7 +574,9 @@ class SeaBattle {
             if (!this.gameStarted) {
                 statusElement.textContent = 'Расставьте корабли';
             } else {
-                statusElement.textContent = this.playerTurn ? 'Ваш ход' : 'Ход противника';
+                statusElement.textContent = this.playerTurn ? 
+                    `Ход: ${this.playerName}` : 
+                    `Ход: ${this.computerName}`;
             }
         }
     }
@@ -595,7 +673,7 @@ class SeaBattle {
                     this.playerTurn = true;
                     startBtn.disabled = true;
                     document.getElementById('rotate-btn').disabled = true;
-                    this.logMessage('Игра началась! Ваш ход.', 'info');
+                    this.logMessage(`Игра началась! Первый ход за ${this.playerName}.`, 'info');
                     this.updateGameInfo();
                     
                     document.querySelector('.ships-to-place').style.display = 'none';
@@ -629,9 +707,18 @@ class SeaBattle {
                 }
             });
         }
+        
+        // Инициализируем обработчики для окна результата
+        this.setupResultModalListeners();
     }
 
     resetGame() {
+        // Скрываем окно результата, если оно открыто
+        const resultModal = document.getElementById('game-result-modal');
+        if (resultModal) {
+            resultModal.style.display = 'none';
+        }
+        
         this.playerBoard = this.createEmptyBoard();
         this.computerBoard = this.createEmptyBoard();
         this.playerShips = [];
@@ -662,7 +749,7 @@ class SeaBattle {
         
         this.generateComputerShips();
         
-        this.logMessage('Новая игра началась! Расставьте ваши корабли.', 'info');
+        this.logMessage(`Новая игра началась! Расставьте ваши корабли, ${this.playerName}.`, 'info');
         
         setTimeout(() => {
             const firstShip = document.querySelector('.ship-item');
